@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VALHALLA - نظام البنك المتطور</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700&display=swap');
+
+        :root {
+            --primary-color: #4a148c;
+            --secondary-color: #7b1fa2;
+            --background-color: #121212;
+            --card-background: #1e1e1e;
+            --text-color: #ffffff;
+            --accent-color: #ce93d8;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .navbar {
+            background-color: rgba(74, 20, 140, 0.9);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero-section {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            height: 50vh;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card {
+            background-color: var(--card-background);
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            margin-bottom: 30px;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(206, 147, 216, 0.2);
+        }
+
+        .btn-custom {
+            background-color: var(--primary-color);
+            border: none;
+            color: var(--text-color);
+            transition: background-color 0.3s ease-in-out;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+        }
+
+        .btn-custom:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .bank-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .bank-table th,
+        .bank-table td {
+            padding: 1rem;
+            text-align: right;
+            border: none;
+        }
+
+        .bank-table th {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .bank-table tr {
+            background-color: var(--card-background);
+            transition: transform 0.3s ease;
+        }
+
+        .bank-table tr:hover {
+            transform: scale(1.02);
+        }
+
+        .progress-bar-custom {
+            height: 10px;
+            border-radius: 5px;
+            background-color: var(--accent-color);
+        }
+
+        .transaction-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .transaction-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--accent-color);
+            transition: background-color 0.3s ease;
+        }
+
+        .transaction-item:hover {
+            background-color: rgba(206, 147, 216, 0.1);
+        }
+
+        .achievement-badge {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 1.5rem;
+            color: var(--background-color);
+        }
+
+        .ticker-tape {
+            overflow: hidden;
+            background-color: var(--primary-color);
+            padding: 10px 0;
+        }
+
+        .ticker-tape-content {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 30s linear infinite;
+        }
+
+        @keyframes ticker {
+            0% { transform: translate3d(100%, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .animated-bg span {
+            position: absolute;
+            display: block;
+            width: 20px;
+            height: 20px;
+            background-color: var(--accent-color);
+            animation: move 25s infinite linear;
+        }
+
+        @keyframes move {
+            0% { transform: translateY(100vh) scale(0); }
+            100% { transform: translateY(-100vh) scale(1); }
+        }
+
+        #bankChart {
+            max-width: 100%;
+            height: 300px;
+        }
+
+        .theme-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 10px 20px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        .card-title, .card-text {
+            color: var(--text-color);
+        }
+
+        .footer {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        .footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: var(--text-color);
+        }
+
+        @media (max-width: 768px) {
+            .hero-section {
+                height: 30vh;
+            }
+
+            .bank-table th,
+            .bank-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fas fa-university me-2"></i>بنك ڤالهالا</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#bank"><i class="fas fa-coins me-1"></i>البنك</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#leaderboard"><i class="fas fa-trophy me-1"></i>المتصدرون</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#statistics"><i class="fas fa-chart-line me-1"></i>الإحصائيات</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#achievements"><i class="fas fa-medal me-1"></i>الإنجازات</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="mb-4">مرحباً بك في بنك ڤالهالا المتطور</h1>
+            <button class="btn btn-custom btn-lg me-3 mb-3" onclick="showAdminPanel()">لوحة الإدارة</button>
+            <button class="btn btn-custom btn-lg mb-3" onclick="showTransferPanel()">تحويل الرصيد</button>
+        </div>
+    </section>
+
+    <div class="ticker-tape">
+        <div class="ticker-tape-content" id="tickerTape">
+            <!-- Content will be dynamically added here -->
+        </div>
+    </div>
+
+    <section id="bank" class="section py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">حسابات البنك</h2>
+            <div class="table-responsive">
+                <table class="bank-table" id="bankTable">
+                    <thead>
+                        <tr>
+                            <th>اللقب</th>
+                            <th>الرصيد</th>
+                            <th>المستوى</th>
+                            <th>التقدم</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Bank data will be populated here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="leaderboard" class="section py-5 bg-dark">
+        <div class="container">
+            <h2 class="text-center mb-4">المتصدرون</h2>
+            <div class="row" id="leaderboardList">
+                <!-- Leaderboard will be populated here by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <section id="statistics" class="section py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">إحصائيات البنك</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <canvas id="bankChart"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <h3 class="mb-3">سجل المعاملات</h3>
+                    <div class="transaction-history" id="transactionHistory">
+                        <!-- Transaction history will be populated here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="achievements" class="section py-5 bg-dark">
+        <div class="container">
+            <h2 class="text-center mb-4">الإنجازات</h2>
+            <div class="row" id="achievementsList">
+                <!-- Achievements will be populated here by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Admin Panel Modal -->
+    <div class="modal fade" id="adminPanel" tabindex="-1" aria-labelledby="adminPanelLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adminPanelLabel">لوحة الإدارة</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="adminForm" class="admin-form">
+                        <input type="password" id="adminPassword" class="form-control mb-3" placeholder="كلمة المرور" required>
+                        <select id="actionType" class="form-select mb-3">
+                            <option value="add">إضافة لقب</option>
+                            <option value="edit">تعديل رصيد</option>
+                            <option value="delete">حذف لقب</option>
+                        </select>
+                        <input type="text" id="titleInput" class="form-control mb-3" placeholder="اللقب" required>
+                        <input type="number" id="balanceInput" class="form-control mb-3" placeholder="الرصيد">
+                        <button type="submit" class="btn btn-custom">تنفيذ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Panel Modal -->
+    <div class="modal fade" id="transferPanel" tabindex="-1" aria-labelledby="transferPanelLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transferPanelLabel">تحويل الرصيد</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="transferForm">
+                        <select id="fromAccount" class="form-select mb-3" required>
+                            <option value="">اختر الحساب المحول منه</option>
+                        </select>
+                        <select id="toAccount" class="form-select mb-3" required>
+                            <option value="">اختر الحساب المحول إليه</option>
+                        </select>
+                        <input type="number" id="transferAmount" class="form-control mb-3" placeholder="المبلغ" required>
+        <input type="password" id="transferPassword" class="form-control mb-3" placeholder="كلمة المرور" required>
+        <button type="submit" class="btn btn-custom">تحويل</button>
+    </form>
+</div>
+</div>
+</div>
+</div>
+
+<div class="theme-switch">
+<button class="btn btn-custom" onclick="toggleTheme()">تغيير المظهر</button>
+</div>
+
+<div class="notification" id="notification"></div>
+
+<footer class="footer">
+<div class="container">
+    <p>تم تطوير هذا الموقع بواسطة <a href="https://wa.me/+201011242323" target="_blank">المطور الرائع</a></p>
+</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Bank data
+let bankData = [
+    { title: "أوبيتو", balance: 10000, level: 5 },
+    { title: "ناروتو", balance: 8000, level: 4 },
+    { title: "إيرين", balance: 6000, level: 3 },
+    { title: "ميكاسا", balance: 5500, level: 3 }
+];
+
+// Transaction history
+let transactionHistory = [];
+
+// Admin password (hashed)
+const adminPasswordHash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // "password" hashed with SHA-256
+
+// Achievements
+const achievements = [
+    { name: "المليونير", description: "امتلك رصيد 1,000,000", icon: "💰" },
+    { name: "المستوى العاشر", description: "وصل إلى المستوى 10", icon: "🏆" },
+    { name: "المتداول النشط", description: "قم بـ 100 عملية تحويل", icon: "📊" },
+    { name: "الصاعد بسرعة", description: "ارفع مستواك 3 مرات في يوم واحد", icon: "🚀" },
+    { name: "سخاء بلا حدود", description: "قم بتحويل 100,000 لحسابات أخرى", icon: "🎁" }
+];
+
+let bankChart; // Global variable to store the chart instance
+
+// Populate bank table
+function populateBankTable() {
+    const tableBody = document.querySelector("#bankTable tbody");
+    tableBody.innerHTML = "";
+    bankData.forEach(member => {
+        const row = document.createElement("tr");
+        const progressPercentage = (member.balance % 2000) / 2000 * 100;
+        row.innerHTML = `
+            <td>${member.title}</td>
+            <td>${member.balance.toLocaleString()}</td>
+            <td>${member.level}</td>
+            <td>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-custom" role="progressbar" style="width: ${progressPercentage}%" aria-valuenow="${progressPercentage}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// Populate leaderboard
+function populateLeaderboard() {
+    const leaderboardList = document.getElementById("leaderboardList");
+    leaderboardList.innerHTML = "";
+    bankData.sort((a, b) => b.balance - a.balance).slice(0, 5).forEach((member, index) => {
+        const col = document.createElement("div");
+        col.className = "col-md-4 mb-4";
+        col.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">#${index + 1} ${member.title}</h5>
+                    <p class="card-text">الرصيد: ${member.balance.toLocaleString()}</p>
+                    <p class="card-text">المستوى: ${member.level}</p>
+                </div>
+            </div>
+        `;
+        leaderboardList.appendChild(col);
+    });
+}
+
+// Show admin panel
+function showAdminPanel() {
+    const adminPanel = new bootstrap.Modal(document.getElementById('adminPanel'));
+    adminPanel.show();
+}
+
+// Handle admin form submission
+document.getElementById("adminForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const password = document.getElementById("adminPassword").value;
+    const actionType = document.getElementById("actionType").value;
+    const title = document.getElementById("titleInput").value;
+    const balance = parseInt(document.getElementById("balanceInput").value) || 0;
+
+    // Check password
+    if (CryptoJS.SHA256(password).toString() !== adminPasswordHash) {
+        showNotification("كلمة المرور غير صحيحة", "error");
+        return;
+    }
+
+    switch (actionType) {
+        case "add":
+            bankData.push({ title, balance, level: Math.floor(balance / 2000) + 1 });
+            addTransaction(إضافة حساب جديد: ${title}, balance);
+            break;
+        case "edit":
+            const member = bankData.find(m => m.title === title);
+            if (member) {
+                const oldBalance = member.balance;
+                member.balance = balance;
+                member.level = Math.floor(balance / 2000) + 1;
+                addTransaction(تعديل رصيد ${title}, balance - oldBalance);
+            } else {
+                showNotification("اللقب غير موجود", "error");
+                return;
+            }
+            break;
+        case "delete":
+            const index = bankData.findIndex(m => m.title === title);
+            if (index !== -1) {
+                bankData.splice(index, 1);
+                addTransaction(حذف حساب: ${title}, 0);
+            } else {
+                showNotification("اللقب غير موجود", "error");
+                return;
+            }
+            break;
+    }
+
+    updateAllData();
+    showNotification("تم تنفيذ العملية بنجاح", "success");
+    document.getElementById("adminForm").reset();
+});
+
+// Show transfer panel
+function showTransferPanel() {
+    const transferPanel = new bootstrap.Modal(document.getElementById('transferPanel'));
+    const fromAccount = document.getElementById('fromAccount');
+    const toAccount = document.getElementById('toAccount');
+    
+    // Clear previous options
+    fromAccount.innerHTML = '<option value="">اختر الحساب المحول منه</option>';
+    toAccount.innerHTML = '<option value="">اختر الحساب المحول إليه</option>';
+    
+    // Populate account options
+    bankData.forEach(member => {
+        const option = document.createElement('option');
+        option.value = member.title;
+        option.textContent = ${member.title} (${member.balance});
+        fromAccount.appendChild(option.cloneNode(true));
+        toAccount.appendChild(option);
+    });
+
+    transferPanel.show();
+}
+
+// Handle transfer form submission
+document.getElementById("transferForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const fromTitle = document.getElementById("fromAccount").value;
+    const toTitle = document.getElementById("toAccount").value;
+    const amount = parseInt(document.getElementById("transferAmount").value);
+    const password = document.getElementById("transferPassword").value;
+
+    // Check password
+    if (CryptoJS.SHA256(password).toString() !== adminPasswordHash) {
+        showNotification("كلمة المرور غير صحيحة", "error");
+        return;
+    }
+
+    const fromMember = bankData.find(m => m.title === fromTitle);
+    const toMember = bankData.find(m => m.title === toTitle);
+
+    if (!fromMember || !toMember) {
+        showNotification("خطأ في اختيار الحسابات", "error");
+        return;
+    }
+
+    if (fromMember.balance < amount) {
+        showNotification("رصيد غير كافٍ للتحويل", "error");
+        return;
+    }
+
+    fromMember.balance -= amount;
+    toMember.balance += amount;
+
+    fromMember.level = Math.floor(fromMember.balance / 2000) + 1;
+    toMember.level = Math.floor(toMember.balance / 2000) + 1;
+
+    addTransaction(تحويل من ${fromTitle} إلى ${toTitle}, amount);
+    updateAllData();
+    showNotification("تم التحويل بنجاح", "success");
+    document.getElementById("transferForm").reset();
+});
+
+// Add transaction to history
+function addTransaction(description, amount) {
+    const transaction = {
+        description,
+        amount,
+        date: new Date().toLocaleString('ar-SA')
+    };
+    transactionHistory.unshift(transaction);
+    updateTransactionHistory();
+}
+
+// Update transaction history display
+function updateTransactionHistory() {
+    const historyContainer = document.getElementById("transactionHistory");
+    historyContainer.innerHTML = "";
+    transactionHistory.slice(0, 10).forEach(transaction => {
+        const item = document.createElement("div");
+        item.className = "transaction-item";
+        item.innerHTML = `
+            <p>${transaction.description}</p>
+            <p>المبلغ: ${transaction.amount.toLocaleString()}</p>
+            <small>${transaction.date}</small>
+        `;
+        historyContainer.appendChild(item);
+    });
+}
+
+// Update bank chart
+function updateBankChart() {
+    const ctx = document.getElementById('bankChart').getContext('2d');
+    
+    if (bankChart) {
+        bankChart.destroy();
+    }
+    
+    bankChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: bankData.map(member => member.title),
+            datasets: [{
+                label: 'رصيد الحساب',
+                data: bankData.map(member => member.balance),
+                backgroundColor: 'rgba(206, 147, 216, 0.6)',
+                borderColor: 'rgba(206, 147, 216, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Update achievements
+function updateAchievements() {
+    const achievementsList = document.getElementById("achievementsList");
+    achievementsList.innerHTML = "";
+    achievements.forEach(achievement => {
+        const col = document.createElement("div");
+        col.className = "col-md-4 mb-4";
+        col.innerHTML = `
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <span class="achievement-badge">${achievement.icon}</span>
+                        ${achievement.name}
+                    </h5>
+                    <p class="card-text">${achievement.description}</p>
+                </div>
+            </div>
+        `;
+        achievementsList.appendChild(col);
+    });
+}
+
+// Update ticker tape
+function updateTickerTape() {
+    const tickerTape = document.getElementById("tickerTape");
+    tickerTape.innerHTML = bankData.map(member => 
+        `${member.title}: ${member.balance.toLocaleString()} | `
+    ).join('');
+}
+
+// Show notification
+function showNotification(message, type) {
+    const notification = document.getElementById("notification");
+    notification.textContent = message;
+    notification.className = notification ${type} show;
+    setTimeout(() => {
+        notification.className = "notification";
+    }, 3000);
+}
+
+// Toggle theme
+function toggleTheme() {
+    document.body.classList.toggle('dark-theme');
+    updateAllData(); // Refresh UI components
+}
+
+// Update all data and UI components
+function updateAllData() {
+    populateBankTable();
+    populateLeaderboard();
+    updateTransactionHistory();
+    updateBankChart();
+    updateAchievements();
+    updateTickerTape();
+}
+
+// Initialize the app
+function initApp() {
+    updateAllData();
+    // Add animated background elements
+    const animatedBg = document.querySelector('.animated-bg');
+    for (let i = 0; i < 50; i++) {
+        const span = document.createElement('span');
+        span.style.left = ${Math.random() * 100}%;
+        span.style.animationDelay = ${Math.random() * 25}s;
+        animatedBg.appendChild(span);
+    }
+}
+
+// Call initApp when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
